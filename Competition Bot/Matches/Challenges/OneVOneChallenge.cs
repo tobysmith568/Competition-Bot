@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Addons.EmojiTools;
 using Discord.WebSocket;
 
 namespace Competition_Bot.Matches.Challenges
@@ -12,8 +13,6 @@ namespace Competition_Bot.Matches.Challenges
     {
         //  Properties
         //  ==========
-
-        public IConfig Config => new OneVOneConfig();
 
         public Participant Challenger { get; set; }
 
@@ -87,8 +86,14 @@ namespace Competition_Bot.Matches.Challenges
 
         public async Task CreateChallenge(IGuild guild)
         {
-            ITextChannel challengeChannel = (await guild.GetTextChannelsAsync()).First(c => c.Name == Config.ChallengeChannelName);
-            challengeChannel = challengeChannel ?? await guild.GetTextChannelAsync(guild.DefaultChannelId);
+            ICategoryChannel category = await guild.CreateCategoryAsync($"{Challenger.Nickname} vs. {AllChallenged[0].Nickname}");
+            await category.AddPermissionOverwriteAsync(guild.EveryoneRole, Permissions.cantViewNoReactions);
+            await category.AddPermissionOverwriteAsync(Challenger.GuildUser, Permissions.canView);
+            await category.AddPermissionOverwriteAsync(AllChallenged[0].GuildUser, Permissions.canView);
+            ITextChannel textChannel = await guild.CreateTextChannelAsync("messaging", m => m.CategoryId = category.Id);
+            await guild.CreateVoiceChannelAsync("talking", t => t.CategoryId = category.Id);
+
+            IUserMessage message = await textChannel.SendMessageAsync($"{Challenger.Mention} {AllChallenged[0].Mention}");
 
             Embed embed = new EmbedBuilder
             {
@@ -117,27 +122,31 @@ namespace Competition_Bot.Matches.Challenges
                 }
             }.Build();
 
-            await challengeChannel.SendMessageAsync(embed: embed);
+            await message.ModifyAsync(m => { m.Content = ""; m.Embed = embed; });
+            await message.AddReactionAsync(AcceptReact(guild));
+            await message.AddReactionAsync(CancelReact(guild));
+            await message.AddReactionAsync(RaiseBetReact(guild));
+            await message.AddReactionAsync(LowerBetReact(guild));
         }
 
-        public void AcceptReact()
+        public IEmote AcceptReact(IGuild guild)
         {
-
+            return GetEmote(ConfigFile.OneVOne.ChallengeAcceptReact, guild);
         }
 
-        public void CancelReact()
+        public IEmote CancelReact(IGuild guild)
         {
-
+            return GetEmote(ConfigFile.OneVOne.ChallengeCancelReact, guild);
         }
 
-        public void RaiseBetReact()
+        public IEmote RaiseBetReact(IGuild guild)
         {
-
+            return GetEmote(ConfigFile.OneVOne.ChallengeRaiseBetReact, guild);
         }
 
-        public void LowerBetReact()
+        public IEmote LowerBetReact(IGuild guild)
         {
-
+            return GetEmote(ConfigFile.OneVOne.ChallengeLowerBetReact, guild);
         }
 
         private static void TryParseNullableUlong(string input, out ulong? output)
@@ -154,6 +163,13 @@ namespace Competition_Bot.Matches.Challenges
                 output = value;
             else
                 output = null;
+        }
+
+        private IEmote GetEmote(string emote, IGuild guild)
+        {
+            if (EmojiMap.Map.ContainsKey(emote))
+                return new Emoji(EmojiMap.Map[emote]);
+            return guild.Emotes.FirstOrDefault(e => e.Name == emote);
         }
     }
 }

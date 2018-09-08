@@ -9,7 +9,8 @@ namespace Competition_Bot.Matches.Challenges
 {
     interface IChallenge
     {
-        IConfig Config { get; }
+        //  Properties
+        //  ==========
 
         Participant Challenger { get; set; }
 
@@ -19,14 +20,17 @@ namespace Competition_Bot.Matches.Challenges
 
         int Points { get; set; }
 
+        //  Methods
+        //  =======
+
         Task CreateChallenge(IGuild guild);
 
-        void AcceptReact();
+        IEmote AcceptReact(IGuild guild);
 
-        void CancelReact();
+        IEmote CancelReact(IGuild guild);
 
-        void RaiseBetReact();
+        IEmote RaiseBetReact(IGuild guild);
 
-        void LowerBetReact();
+        IEmote LowerBetReact(IGuild guild);
     }
 }

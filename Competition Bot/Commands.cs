@@ -25,7 +25,7 @@ namespace Competition_Bot
             {
                 try
                 {
-                    if (ConfigFile.AllowsSingle == null)
+                    if (ConfigFile.OneVOne == null)
                         return;
                     if (Context.Channel is IDMChannel)
                         return;

@@ -61,8 +61,6 @@ namespace Competition_Bot
         private readonly CommandService _commands = new CommandService();
         private IServiceProvider _services;
 
-        private static List<IConfig> allConfigs = new List<IConfig>();
-
         static void Main(string[] args)
         {
             Console.Title = "";
@@ -168,15 +166,6 @@ namespace Competition_Bot
                     if (((IGuildUser)user).Nickname == null)
                         await((IGuildUser)user).ModifyAsync(u => u.Nickname = user.Username + " 💰 100");
             }
-
-            foreach (IConfig config in allConfigs)
-            {
-                if (arg.Channels.Count(c => c.Name == config.ChallengeChannelName) == 0)
-                {
-                    RestTextChannel newChannel = await arg.CreateTextChannelAsync(config.ChallengeChannelName);
-                    await newChannel.AddPermissionOverwriteAsync(arg.EveryoneRole, Permissions.noReactions);
-                }
-            }
         }
 
         private async Task HandleCommandAsync(SocketMessage message)
@@ -194,14 +183,6 @@ namespace Competition_Bot
                 if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
                     await msg.Channel.SendMessageAsync(result.ErrorReason);
             }
-        }
-
-        public static void SubscribeConfig(IConfig config)
-        {
-            if (allConfigs.Count(c => c.GetType() == config.GetType()) != 0)
-                return;
-
-            allConfigs.Add(config);
         }
     }
 }

@@ -21,8 +21,8 @@ namespace Competition_Bot
         [JsonProperty("ModRoleName")]
         private string _ModRoleName { get; set; }
 
-        [JsonProperty("AllowsSingle")]
-        private OneVOneConfig _AllowsSingle { get; set; }
+        [JsonProperty("OneVOne")]
+        private OneVOneConfig _OneVOne { get; set; }
 
         //  Static Properties
         //  =================
@@ -53,11 +53,11 @@ namespace Competition_Bot
             }
         }
 
-        public static OneVOneConfig AllowsSingle
+        public static OneVOneConfig OneVOne
         {
             get
             {
-                return singleton._AllowsSingle;
+                return singleton._OneVOne;
             }
         }
 

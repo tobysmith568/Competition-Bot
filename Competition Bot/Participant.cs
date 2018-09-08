@@ -46,6 +46,14 @@ namespace Competition_Bot
             }
         }
 
+        public string Nickname
+        {
+            get
+            {
+                return GuildUser.Nickname;
+            }
+        }
+
         //  Constructors
         //  ============
 

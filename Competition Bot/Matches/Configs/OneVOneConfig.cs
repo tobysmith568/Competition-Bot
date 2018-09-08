@@ -14,10 +14,6 @@ namespace Competition_Bot
         //  ===============
 
         [JsonRequired]
-        [JsonProperty("ChallengeChannelName")]
-        public string ChallengeChannelName { get; private set; }
-
-        [JsonRequired]
         [JsonProperty("ChallengeAcceptReact")]
         public string ChallengeAcceptReact { get; private set; }
 
@@ -32,14 +28,5 @@ namespace Competition_Bot
         [JsonRequired]
         [JsonProperty("ChallengeLowerBetReact")]
         public string ChallengeLowerBetReact { get; private set; }
-
-        //  Methods
-        //  =======
-
-        [OnDeserialized]
-        internal void OnCreation(StreamingContext context)
-        {
-            Program.SubscribeConfig(this);
-        }
     }
 }

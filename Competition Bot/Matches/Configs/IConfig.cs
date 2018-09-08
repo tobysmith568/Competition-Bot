@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Discord;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,8 +11,6 @@ namespace Competition_Bot
     {
         //  Properties
         //  ==========
-
-        string ChallengeChannelName { get; }
 
         string ChallengeAcceptReact { get; }
 
