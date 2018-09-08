@@ -61,6 +61,8 @@ namespace Competition_Bot
         private readonly CommandService _commands = new CommandService();
         private IServiceProvider _services;
 
+        private static List<IConfig> allConfigs = new List<IConfig>();
+
         static void Main(string[] args)
         {
             Console.Title = "";
@@ -149,28 +151,29 @@ namespace Competition_Bot
             _client.UserJoined += _client_UserJoined;
         }
 
-        private async Task _client_UserJoined(SocketGuildUser arg)
+        private async Task _client_UserJoined(SocketGuildUser user)
         {
-            if (((IGuildUser)arg).Nickname == null)
-                await((IGuildUser)arg).ModifyAsync(u => u.Nickname = arg.Username + " 💰 100");
+            string username = user.Username;
+            username = username.Replace("💰", "");
+            username = username + " 💰 100";
+            await ((IGuildUser)user).ModifyAsync(u => u.Nickname = username);
         }
 
         private async Task _client_GuildAvailable(SocketGuild arg)
         {
             //Check all the users have some points
-            foreach (IUser user in arg.Users.Where(u => u.IsBot == false))
+            foreach (IUser user in arg.Users.Where(u => u.IsBot == false)) 
             {
                 if (((IGuildUser)user).Guild.OwnerId != user.Id)
                     if (((IGuildUser)user).Nickname == null)
                         await((IGuildUser)user).ModifyAsync(u => u.Nickname = user.Username + " 💰 100");
             }
 
-            //Check all the challenge channels exist
-            if (ConfigFile.AllowsSingle != null)
+            foreach (IConfig config in allConfigs)
             {
-                if (arg.Channels.Count(c => c.Name == ConfigFile.AllowsSingle.ChallengeChannelName) == 0)
+                if (arg.Channels.Count(c => c.Name == config.ChallengeChannelName) == 0)
                 {
-                    RestTextChannel newChannel = await arg.CreateTextChannelAsync(ConfigFile.AllowsSingle.ChallengeChannelName);
+                    RestTextChannel newChannel = await arg.CreateTextChannelAsync(config.ChallengeChannelName);
                     await newChannel.AddPermissionOverwriteAsync(arg.EveryoneRole, Permissions.noReactions);
                 }
             }
@@ -191,6 +194,14 @@ namespace Competition_Bot
                 if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
                     await msg.Channel.SendMessageAsync(result.ErrorReason);
             }
+        }
+
+        public static void SubscribeConfig(IConfig config)
+        {
+            if (allConfigs.Count(c => c.GetType() == config.GetType()) != 0)
+                return;
+
+            allConfigs.Add(config);
         }
     }
 }

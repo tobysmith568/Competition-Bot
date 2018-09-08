@@ -29,9 +29,9 @@ namespace Competition_Bot
                         return;
                     if (Context.Channel is IDMChannel)
                         return;
+                    if (Context.Channel is IGroupChannel)
+                        return;
                     await Context.Message.DeleteAsync();
-
-                    IGuild guild = Context.Guild;
 
                     //Get the challenger
                     Participant challenger = new Participant((IGuildUser)Context.User);
@@ -42,7 +42,7 @@ namespace Competition_Bot
                         return;
                     }
 
-                    if (guild.OwnerId == oponent.Id)
+                    if (Context.Guild.OwnerId == oponent.Id)
                     {
                         await challenger.SendMessage("Sorry, you can't challenge the server owner!");
                         return;
