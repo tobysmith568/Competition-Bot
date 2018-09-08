@@ -10,9 +10,9 @@ namespace Competition_Bot
     {
         Participant Challenger { get; set; }
 
-        Participant[] AllChallenged { get; set; }
+        List<Participant> AllChallenged { get; set; }
 
-        Participant[] AllPlayers { get; set; }
+        List<Participant> AllPlayers { get; }
 
         int Points { get; set; }
     }

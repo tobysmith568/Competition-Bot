@@ -153,6 +153,7 @@ namespace Competition_Bot
         private async Task _client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
             IUserMessage message = await arg1.GetOrDownloadAsync();
+            IGuild guild = ((IGuildChannel)arg2).Guild;
 
             if (arg3.User.Value.IsBot)
                 return;
@@ -161,7 +162,7 @@ namespace Competition_Bot
             challenge = await OneVOneChallenge.TryParse(message);
 
             if (challenge != null)
-                challenge.ReactionAdded(arg3, message, ((IGuildChannel)arg2).Guild);
+                await challenge.ReactionAdded(arg3, message, guild);
         }
 
         private static IEnumerable<Type> GetImplementationsOf<TInterface>()

@@ -11,6 +11,11 @@ namespace Competition_Bot
 {
     public class OneVOneChallenge : IChallenge
     {
+        //  Variables
+        //  =========
+
+        private const string embedDescription = "Setup your challenge!";
+
         //  Properties
         //  ==========
 
@@ -56,6 +61,7 @@ namespace Competition_Bot
             ulong? challengerId = null;
             ulong? challengedId = null;
             int? points = null;
+            string description = message.Embeds.First().Description;
 
             foreach (EmbedField field in message.Embeds.First().Fields)
             {
@@ -67,7 +73,7 @@ namespace Competition_Bot
                     TryParseNullableInt(field.Value, out points);
             }
 
-            if (challengerId == null || challengedId == null || points == null)
+            if (challengerId == null || challengedId == null || points == null || description != embedDescription)
                 return null;
 
             IGuild guild = ((IGuildChannel)message.Channel).Guild;
@@ -96,9 +102,21 @@ namespace Competition_Bot
             IUserMessage message = await textChannel.SendMessageAsync($"{Challenger.Mention} {AllChallenged[0].Mention}");
             await message.PinAsync();
 
-            Embed embed = new EmbedBuilder
+            Embed embed = GetEmbed();
+
+            await message.ModifyAsync(m => { m.Content = ""; m.Embed = embed; });
+            await message.AddReactionAsync(AcceptReact(guild));
+            await message.AddReactionAsync(CancelReact(guild));
+            await message.AddReactionAsync(RaiseBetReact(guild));
+            await message.AddReactionAsync(LowerBetReact(guild));
+        }
+
+        private Embed GetEmbed()
+        {
+            return new EmbedBuilder
             {
                 Title = $"{Challenger.Username} challenges {AllChallenged[0].Username}!",
+                Description = embedDescription,
                 Color = Color.Blue,
                 Fields = new List<EmbedFieldBuilder>
                 {
@@ -122,29 +140,62 @@ namespace Competition_Bot
                     },
                 }
             }.Build();
-
-            await message.ModifyAsync(m => { m.Content = ""; m.Embed = embed; });
-            await message.AddReactionAsync(AcceptReact(guild));
-            await message.AddReactionAsync(CancelReact(guild));
-            await message.AddReactionAsync(RaiseBetReact(guild));
-            await message.AddReactionAsync(LowerBetReact(guild));
         }
 
-        public async void ReactionAdded(SocketReaction reaction, IUserMessage message, IGuild guild)
+        public async Task ReactionAdded(SocketReaction reaction, IUserMessage message, IGuild guild)
         {
-            if (reaction.Emote == AcceptReact(guild))
-            {
+            if (reaction.UserId != Challenger.Id && reaction.UserId != AllChallenged[0].Id)
+                await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
 
+            if (reaction.Emote.Name == AcceptReact(guild).Name)
+            {
+                IEnumerable<ulong> reactedIds = (await message.GetReactionUsersAsync(reaction.Emote, 5)
+                    .FlattenAsync())
+                    .Select(u => u.Id);
+
+                if (reactedIds.Contains(Challenger.Id) && reactedIds.Contains(AllChallenged[0].Id))
+                {
+                    await message.DeleteAsync();
+
+                    OneVOneMatch match = new OneVOneMatch(this);
+                    await match.CreateMatch(message.Channel, guild);
+                }
             }
             else if (reaction.Emote.Name == CancelReact(guild).Name)
             {
-                IEnumerable<ulong> reactedIds = (await message.GetReactionUsersAsync(CancelReact(guild), 5)
+                IEnumerable<ulong> reactedIds = (await message.GetReactionUsersAsync(reaction.Emote, 5)
                     .FlattenAsync())
                     .Select(u => u.Id);
 
                 if (reactedIds.Contains(Challenger.Id) && reactedIds.Contains(AllChallenged[0].Id))
                     await CloseChallenge(reaction, message, guild);
             }
+            else if (reaction.Emote.Name == RaiseBetReact(guild).Name)
+            {
+                await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+
+                if (Points + 10 > Challenger.Currency)
+                    return;
+                if (Points + 10 > AllChallenged[0].Currency)
+                    return;
+
+                Points += 10;
+
+                await message.ModifyAsync(m => m.Embed = GetEmbed());
+            }
+            else if (reaction.Emote.Name == LowerBetReact(guild).Name)
+            {
+                await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+
+                if (Points - 10 <= 0)
+                    return;
+
+                Points -= 10;
+
+                await message.ModifyAsync(m => m.Embed = GetEmbed());
+            }
+            else
+                await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
         }
 
         public IEmote AcceptReact(IGuild guild)

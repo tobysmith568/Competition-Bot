@@ -28,5 +28,13 @@ namespace Competition_Bot
         [JsonRequired]
         [JsonProperty("ChallengeLowerBetReact")]
         public string ChallengeLowerBetReact { get; private set; }
+
+        [JsonRequired]
+        [JsonProperty("WonChallengeReact")]
+        public string WonChallengeReact { get; private set; }
+
+        [JsonRequired]
+        [JsonProperty("LostChallengeReact")]
+        public string LostChallengeReact { get; private set; }
     }
 }

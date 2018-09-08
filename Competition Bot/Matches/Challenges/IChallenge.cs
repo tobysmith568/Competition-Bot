@@ -8,7 +8,7 @@ using Discord.WebSocket;
 
 namespace Competition_Bot
 {
-    interface IChallenge
+    public interface IChallenge
     {
         //  Properties
         //  ==========
@@ -34,7 +34,7 @@ namespace Competition_Bot
 
         IEmote LowerBetReact(IGuild guild);
 
-        void ReactionAdded(SocketReaction reaction, IUserMessage message, IGuild guild);
+        Task ReactionAdded(SocketReaction reaction, IUserMessage message, IGuild guild);
 
         Task CloseChallenge(SocketReaction reaction, IUserMessage message, IGuild guild);
     }
