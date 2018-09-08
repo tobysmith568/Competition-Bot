@@ -9,7 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
-using Competition_Bot.Matches.Challenges;
 using Discord.Rest;
 
 namespace Competition_Bot

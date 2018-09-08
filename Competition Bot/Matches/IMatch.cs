@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Competition_Bot.Matches
+namespace Competition_Bot
 {
     public interface IMatch
     {

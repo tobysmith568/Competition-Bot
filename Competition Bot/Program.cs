@@ -147,6 +147,29 @@ namespace Competition_Bot
             _client.MessageReceived += HandleCommandAsync;
             _client.GuildAvailable += _client_GuildAvailable;
             _client.UserJoined += _client_UserJoined;
+            _client.ReactionAdded += _client_ReactionAdded;
+        }
+
+        private async Task _client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        {
+            IUserMessage message = await arg1.GetOrDownloadAsync();
+
+            if (arg3.User.Value.IsBot)
+                return;
+
+            IChallenge challenge;
+            challenge = await OneVOneChallenge.TryParse(message);
+
+            if (challenge != null)
+                challenge.ReactionAdded(arg3, message, ((IGuildChannel)arg2).Guild);
+        }
+
+        private static IEnumerable<Type> GetImplementationsOf<TInterface>()
+        {
+            var interfaceType = typeof(TInterface);
+            return AppDomain.CurrentDomain.GetAssemblies()
+              .Select(assembly => assembly.GetTypes().Where(type => !type.IsInterface && interfaceType.IsAssignableFrom(type)))
+              .SelectMany(implementation => implementation);
         }
 
         private async Task _client_UserJoined(SocketGuildUser user)

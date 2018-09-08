@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using Discord.WebSocket;
 
-namespace Competition_Bot.Matches.Challenges
+namespace Competition_Bot
 {
     interface IChallenge
     {
@@ -32,5 +33,9 @@ namespace Competition_Bot.Matches.Challenges
         IEmote RaiseBetReact(IGuild guild);
 
         IEmote LowerBetReact(IGuild guild);
+
+        void ReactionAdded(SocketReaction reaction, IUserMessage message, IGuild guild);
+
+        Task CloseChallenge(SocketReaction reaction, IUserMessage message, IGuild guild);
     }
 }

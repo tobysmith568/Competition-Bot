@@ -7,7 +7,7 @@ using Discord;
 using Discord.Addons.EmojiTools;
 using Discord.WebSocket;
 
-namespace Competition_Bot.Matches.Challenges
+namespace Competition_Bot
 {
     public class OneVOneChallenge : IChallenge
     {
@@ -94,6 +94,7 @@ namespace Competition_Bot.Matches.Challenges
             await guild.CreateVoiceChannelAsync("talking", t => t.CategoryId = category.Id);
 
             IUserMessage message = await textChannel.SendMessageAsync($"{Challenger.Mention} {AllChallenged[0].Mention}");
+            await message.PinAsync();
 
             Embed embed = new EmbedBuilder
             {
@@ -127,6 +128,23 @@ namespace Competition_Bot.Matches.Challenges
             await message.AddReactionAsync(CancelReact(guild));
             await message.AddReactionAsync(RaiseBetReact(guild));
             await message.AddReactionAsync(LowerBetReact(guild));
+        }
+
+        public async void ReactionAdded(SocketReaction reaction, IUserMessage message, IGuild guild)
+        {
+            if (reaction.Emote == AcceptReact(guild))
+            {
+
+            }
+            else if (reaction.Emote.Name == CancelReact(guild).Name)
+            {
+                IEnumerable<ulong> reactedIds = (await message.GetReactionUsersAsync(CancelReact(guild), 5)
+                    .FlattenAsync())
+                    .Select(u => u.Id);
+
+                if (reactedIds.Contains(Challenger.Id) && reactedIds.Contains(AllChallenged[0].Id))
+                    await CloseChallenge(reaction, message, guild);
+            }
         }
 
         public IEmote AcceptReact(IGuild guild)
@@ -170,6 +188,25 @@ namespace Competition_Bot.Matches.Challenges
             if (EmojiMap.Map.ContainsKey(emote))
                 return new Emoji(EmojiMap.Map[emote]);
             return guild.Emotes.FirstOrDefault(e => e.Name == emote);
+        }
+
+        public async Task CloseChallenge(SocketReaction reaction, IUserMessage message, IGuild guild)
+        {
+            ulong categoryId = ((INestedChannel)reaction.Channel).CategoryId.Value;
+
+            foreach (ITextChannel channel in await guild.GetTextChannelsAsync())
+            {
+                if (channel.CategoryId == categoryId)
+                    await channel.DeleteAsync();
+            }
+
+            foreach (IVoiceChannel channel in await guild.GetVoiceChannelsAsync())
+            {
+                if (channel.CategoryId == categoryId)
+                    await channel.DeleteAsync();
+            }
+
+            await (await guild.GetCategoriesAsync()).FirstOrDefault(c => c.Id == categoryId).DeleteAsync();
         }
     }
 }

@@ -50,7 +50,7 @@ namespace Competition_Bot
         {
             get
             {
-                return GuildUser.Nickname;
+                return GuildUser.Nickname.Split(new string[] { "💰" }, StringSplitOptions.None)[0].Trim();
             }
         }
 
