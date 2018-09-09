@@ -46,6 +46,14 @@ namespace Competition_Bot
             }
         }
 
+        public string Nickname
+        {
+            get
+            {
+                return GuildUser.Nickname.Split(new string[] { "💰" }, StringSplitOptions.None)[0].Trim();
+            }
+        }
+
         //  Constructors
         //  ============
 
@@ -60,6 +68,12 @@ namespace Competition_Bot
         public async Task SendMessage(string message)
         {
             await GuildUser.SendMessageAsync(message);
+        }
+
+        public async Task GiveCurrency(int value)
+        {
+            string fullName = Nickname + " 💰 " + (Currency + value);
+            await GuildUser.ModifyAsync(u => u.Nickname = fullName);
         }
     }
 }

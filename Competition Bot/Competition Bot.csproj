@@ -170,10 +170,12 @@
     <Compile Include="Commands.cs" />
     <Compile Include="ConfigFile.cs" />
     <Compile Include="Converter.cs" />
+    <Compile Include="IComponent.cs" />
     <Compile Include="Matches\Challenges\IChallenge.cs" />
     <Compile Include="Matches\Challenges\OneVOneChallenge.cs" />
     <Compile Include="Matches\Configs\IConfig.cs" />
     <Compile Include="Matches\IMatch.cs" />
+    <Compile Include="Matches\OneVOneMatch.cs" />
     <Compile Include="MatchTypes.cs" />
     <Compile Include="Matches\Configs\OneVOneConfig.cs" />
     <Compile Include="Participant.cs" />

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -13,23 +14,27 @@ namespace Competition_Bot
         //  ===============
 
         [JsonRequired]
-        [JsonProperty("ChallengeChannelName")]
-        public string ChallengeChannelName { get; }
-
-        [JsonRequired]
         [JsonProperty("ChallengeAcceptReact")]
-        public string ChallengeAcceptReact { get; }
+        public string ChallengeAcceptReact { get; private set; }
 
         [JsonRequired]
         [JsonProperty("ChallengeCancelReact")]
-        public string ChallengeCancelReact { get; }
+        public string ChallengeCancelReact { get; private set; }
 
         [JsonRequired]
         [JsonProperty("ChallengeRaiseBetReact")]
-        public string ChallengeRaiseBetReact { get; }
+        public string ChallengeRaiseBetReact { get; private set; }
 
         [JsonRequired]
         [JsonProperty("ChallengeLowerBetReact")]
-        public string ChallengeLowerBetReact { get; }
+        public string ChallengeLowerBetReact { get; private set; }
+
+        [JsonRequired]
+        [JsonProperty("WonChallengeReact")]
+        public string WonChallengeReact { get; private set; }
+
+        [JsonRequired]
+        [JsonProperty("LostChallengeReact")]
+        public string LostChallengeReact { get; private set; }
     }
 }

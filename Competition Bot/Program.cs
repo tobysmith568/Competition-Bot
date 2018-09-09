@@ -147,32 +147,51 @@ namespace Competition_Bot
             _client.MessageReceived += HandleCommandAsync;
             _client.GuildAvailable += _client_GuildAvailable;
             _client.UserJoined += _client_UserJoined;
+            _client.ReactionAdded += _client_ReactionAdded;
         }
 
-        private async Task _client_UserJoined(SocketGuildUser arg)
+        private async Task _client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
-            if (((IGuildUser)arg).Nickname == null)
-                await((IGuildUser)arg).ModifyAsync(u => u.Nickname = arg.Username + " 💰 100");
+            IUserMessage message = await arg1.GetOrDownloadAsync();
+            IGuild guild = ((IGuildChannel)arg2).Guild;
+
+            if (arg3.User.Value.IsBot)
+                return;
+
+            IComponent challenge;
+            challenge = await OneVOneChallenge.TryParse(message);
+
+            if (challenge == null)
+                challenge = await OneVOneMatch.TryParse(message);
+
+            if (challenge != null)
+                await challenge.ReactionAdded(arg3, message, guild);
+        }
+
+        private static IEnumerable<Type> GetImplementationsOf<TInterface>()
+        {
+            var interfaceType = typeof(TInterface);
+            return AppDomain.CurrentDomain.GetAssemblies()
+              .Select(assembly => assembly.GetTypes().Where(type => !type.IsInterface && interfaceType.IsAssignableFrom(type)))
+              .SelectMany(implementation => implementation);
+        }
+
+        private async Task _client_UserJoined(SocketGuildUser user)
+        {
+            string username = user.Username;
+            username = username.Replace("💰", "");
+            username = username + " 💰 100";
+            await ((IGuildUser)user).ModifyAsync(u => u.Nickname = username);
         }
 
         private async Task _client_GuildAvailable(SocketGuild arg)
         {
             //Check all the users have some points
-            foreach (IUser user in arg.Users.Where(u => u.IsBot == false))
+            foreach (IUser user in arg.Users.Where(u => u.IsBot == false)) 
             {
                 if (((IGuildUser)user).Guild.OwnerId != user.Id)
                     if (((IGuildUser)user).Nickname == null)
                         await((IGuildUser)user).ModifyAsync(u => u.Nickname = user.Username + " 💰 100");
-            }
-
-            //Check all the challenge channels exist
-            if (ConfigFile.AllowsSingle != null)
-            {
-                if (arg.Channels.Count(c => c.Name == ConfigFile.AllowsSingle.ChallengeChannelName) == 0)
-                {
-                    RestTextChannel newChannel = await arg.CreateTextChannelAsync(ConfigFile.AllowsSingle.ChallengeChannelName);
-                    await newChannel.AddPermissionOverwriteAsync(arg.EveryoneRole, Permissions.noReactions);
-                }
             }
         }
 

@@ -9,7 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
-using Competition_Bot.Matches.Challenges;
 using Discord.Rest;
 
 namespace Competition_Bot
@@ -25,13 +24,13 @@ namespace Competition_Bot
             {
                 try
                 {
-                    if (ConfigFile.AllowsSingle == null)
+                    if (ConfigFile.OneVOne == null)
                         return;
                     if (Context.Channel is IDMChannel)
                         return;
+                    if (Context.Channel is IGroupChannel)
+                        return;
                     await Context.Message.DeleteAsync();
-
-                    IGuild guild = Context.Guild;
 
                     //Get the challenger
                     Participant challenger = new Participant((IGuildUser)Context.User);
@@ -42,7 +41,7 @@ namespace Competition_Bot
                         return;
                     }
 
-                    if (guild.OwnerId == oponent.Id)
+                    if (Context.Guild.OwnerId == oponent.Id)
                     {
                         await challenger.SendMessage("Sorry, you can't challenge the server owner!");
                         return;

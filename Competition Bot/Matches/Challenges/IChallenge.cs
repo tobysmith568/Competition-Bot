@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
+using Discord.WebSocket;
 
-namespace Competition_Bot.Matches.Challenges
+namespace Competition_Bot
 {
-    interface IChallenge
+    public interface IChallenge : IComponent
     {
-        IConfig Config { get; }
+        //  Properties
+        //  ==========
 
         Participant Challenger { get; set; }
 
@@ -19,14 +21,19 @@ namespace Competition_Bot.Matches.Challenges
 
         int Points { get; set; }
 
+        //  Methods
+        //  =======
+
         Task CreateChallenge(IGuild guild);
 
-        void AcceptReact();
+        IEmote AcceptReact(IGuild guild);
 
-        void CancelReact();
+        IEmote CancelReact(IGuild guild);
 
-        void RaiseBetReact();
+        IEmote RaiseBetReact(IGuild guild);
 
-        void LowerBetReact();
+        IEmote LowerBetReact(IGuild guild);
+
+        Task CloseChallenge(SocketReaction reaction, IUserMessage message, IGuild guild);
     }
 }
