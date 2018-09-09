@@ -69,5 +69,11 @@ namespace Competition_Bot
         {
             await GuildUser.SendMessageAsync(message);
         }
+
+        public async Task GiveCurrency(int value)
+        {
+            string fullName = Nickname + " 💰 " + (Currency + value);
+            await GuildUser.ModifyAsync(u => u.Nickname = fullName);
+        }
     }
 }

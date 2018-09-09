@@ -65,12 +65,20 @@ namespace Competition_Bot
 
             foreach (EmbedField field in message.Embeds.First().Fields)
             {
-                if (field.Name == "Challenger:")
-                    TryParseNullableUlong(field.Value.Trim(new char[] { '<', '>', '@', '!' }), out challengerId);
-                if (field.Name == "Challenged:")
-                    TryParseNullableUlong(field.Value.Trim(new char[] { '<', '>', '@', '!' }), out challengedId);
-                if (field.Name == "Amount:")
-                    TryParseNullableInt(field.Value, out points);
+                switch (field.Name)
+                {
+                    case "Challenger:":
+                        TryParseNullableUlong(field.Value.Trim(new char[] { '<', '>', '@', '!' }), out challengerId);
+                        break;
+                    case "Challenged:":
+                        TryParseNullableUlong(field.Value.Trim(new char[] { '<', '>', '@', '!' }), out challengedId);
+                        break;
+                    case "Amount:":
+                        TryParseNullableInt(field.Value, out points);
+                        break;
+                    default:
+                        break;
+                }
             }
 
             if (challengerId == null || challengedId == null || points == null || description != embedDescription)
@@ -145,7 +153,10 @@ namespace Competition_Bot
         public async Task ReactionAdded(SocketReaction reaction, IUserMessage message, IGuild guild)
         {
             if (reaction.UserId != Challenger.Id && reaction.UserId != AllChallenged[0].Id)
+            {
                 await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+                return;
+            }
 
             if (reaction.Emote.Name == AcceptReact(guild).Name)
             {

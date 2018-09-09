@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Addons.EmojiTools;
+using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace Competition_Bot
         //  Variables
         //  =========
 
-        private const string embedDescription = "Indicate below who one!";
+        private const string embedDescription = "Indicate below if you won or lost!";
 
         //  Properties
         //  ==========
@@ -65,12 +66,20 @@ namespace Competition_Bot
 
             foreach (EmbedField field in message.Embeds.First().Fields)
             {
-                if (field.Name == "Challenger:")
-                    TryParseNullableUlong(field.Value.Trim(new char[] { '<', '>', '@', '!' }), out challengerId);
-                if (field.Name == "Challenged:")
-                    TryParseNullableUlong(field.Value.Trim(new char[] { '<', '>', '@', '!' }), out challengedId);
-                if (field.Name == "Amount:")
-                    TryParseNullableInt(field.Value, out points);
+                switch (field.Name)
+                {
+                    case "Challenger:":
+                        TryParseNullableUlong(field.Value.Trim(new char[] { '<', '>', '@', '!' }), out challengerId);
+                        break;
+                    case "Challenged:":
+                        TryParseNullableUlong(field.Value.Trim(new char[] { '<', '>', '@', '!' }), out challengedId);
+                        break;
+                    case "Amount:":
+                        TryParseNullableInt(field.Value, out points);
+                        break;
+                    default:
+                        break;
+                }
             }
 
             if (challengerId == null || challengedId == null || points == null || description != embedDescription)
@@ -127,6 +136,77 @@ namespace Competition_Bot
                     },
                 }
             }.Build();
+        }
+
+        public async Task ReactionAdded(SocketReaction reaction, IUserMessage message, IGuild guild)
+        {
+            string wonReact = WonReact(guild).Name;
+            string lostReact = LostReact(guild).Name;
+            string actualReact = reaction.Emote.Name;
+
+            if ((reaction.UserId != Challenger.Id && reaction.UserId != AllChallenged[0].Id)
+             || (actualReact != wonReact && actualReact != lostReact))
+            {
+                await message.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+                return;
+            }
+
+            IEnumerable<ulong> wonReacts = (await message.GetReactionUsersAsync(WonReact(guild), 5).FlattenAsync()).Select(p => p.Id);
+            IEnumerable<ulong> lostReacts = (await message.GetReactionUsersAsync(LostReact(guild), 5).FlattenAsync()).Select(p => p.Id);
+
+            if ((wonReacts.Contains(Challenger.Id) && !wonReacts.Contains(AllChallenged[0].Id))//Challenger won
+            && (!lostReacts.Contains(Challenger.Id) && lostReacts.Contains(AllChallenged[0].Id)))
+            {
+                await Winner(Challenger, AllChallenged[0]);
+                await EndMatch((INestedChannel)message.Channel);
+            }
+            else if ((wonReacts.Contains(AllChallenged[0].Id) && !wonReacts.Contains(Challenger.Id))//Challenged won
+            && (!lostReacts.Contains(AllChallenged[0].Id) && lostReacts.Contains(Challenger.Id)))
+            {
+                await Winner(AllChallenged[0], Challenger);
+                await EndMatch((INestedChannel)message.Channel);
+            }
+            else if ((wonReacts.Contains(Challenger.Id) && wonReacts.Contains(AllChallenged[0].Id))//Disagreement
+                || (lostReacts.Contains(Challenger.Id) && lostReacts.Contains(AllChallenged[0].Id)))
+            {
+                ulong categoryId = ((INestedChannel) message.Channel).CategoryId.Value;
+                ICategoryChannel category = (await ((IGuildChannel)message.Channel).Guild.GetCategoriesAsync()).FirstOrDefault(c => c.Id == categoryId);
+
+                foreach (IRole role in guild.Roles)
+                {
+                    if (role.Name == ConfigFile.ModRoleName && category.GetPermissionOverwrite(role) == null)
+                    {
+                        await category.AddPermissionOverwriteAsync(role, Permissions.canView);
+                        await message.Channel.SendMessageAsync($"{role.Mention}, it looks like we might have a disagreement here!");
+                        break;
+                    }
+                }
+            }
+        }
+
+        private async Task Winner(Participant winner, Participant loser)
+        {
+            await winner.GiveCurrency(Points);
+            await loser.GiveCurrency(0 - Points);
+        }
+
+        public async Task EndMatch(INestedChannel fromChannel)
+        {
+            ulong categoryId = (fromChannel).CategoryId.Value;
+
+            foreach (ITextChannel channel in await fromChannel.Guild.GetTextChannelsAsync())
+            {
+                if (channel.CategoryId == categoryId)
+                    await channel.DeleteAsync();
+            }
+
+            foreach (IVoiceChannel channel in await fromChannel.Guild.GetVoiceChannelsAsync())
+            {
+                if (channel.CategoryId == categoryId)
+                    await channel.DeleteAsync();
+            }
+
+            await (await fromChannel.Guild.GetCategoriesAsync()).FirstOrDefault(c => c.Id == categoryId).DeleteAsync();
         }
 
         public IEmote WonReact(IGuild guild)

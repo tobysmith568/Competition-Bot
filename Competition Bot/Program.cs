@@ -158,8 +158,11 @@ namespace Competition_Bot
             if (arg3.User.Value.IsBot)
                 return;
 
-            IChallenge challenge;
+            IComponent challenge;
             challenge = await OneVOneChallenge.TryParse(message);
+
+            if (challenge == null)
+                challenge = await OneVOneMatch.TryParse(message);
 
             if (challenge != null)
                 await challenge.ReactionAdded(arg3, message, guild);
